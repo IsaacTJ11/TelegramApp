@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini App Telegram</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: var(--tg-theme-hint-color, #666);
+            margin-bottom: 10px;
+        }
+        
+        .card {
+            background: var(--tg-theme-secondary-bg-color, #f8f9fa);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--tg-theme-section-separator-color, #e1e8ed);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--tg-theme-hint-color, #666);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--tg-theme-section-separator-color, #e1e8ed);
+            border-radius: 8px;
+            font-size: 16px;
+            background: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: var(--tg-theme-button-color, #007bff);
+            color: var(--tg-theme-button-text-color, #fff);
+        }
+        
+        .btn-secondary {
+            background: var(--tg-theme-secondary-bg-color, #6c757d);
+            color: #fff;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: var(--tg-theme-secondary-bg-color, #f8f9fa);
+            border-radius: 8px;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--tg-theme-button-color, #007bff);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--tg-theme-hint-color, #666);
+            margin-top: 5px;
+        }
+        
+        .message {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--tg-theme-section-separator-color, #e1e8ed);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--tg-theme-button-color, #007bff);
+            color: var(--tg-theme-button-color, #007bff);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Mini App Telegram</h1>
+            <p>Bienvenido a nuestra aplicación integrada</p>
+        </div>
+        
+        <div id="message" class="message"></div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('home')">🏠 Inicio</div>
+            <div class="tab" onclick="showTab('form')">📝 Formulario</div>
+            <div class="tab" onclick="showTab('stats')">📊 Stats</div>
+        </div>
+        
+        <!-- Tab: Inicio -->
+        <div id="home" class="tab-content active">
+            <div class="card">
+                <h3>¡Bienvenido!</h3>
+                <p>Esta es una Mini App de Telegram de ejemplo.</p>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-number">42</div>
+                        <div class="stat-label">Usuarios</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">128</div>
+                        <div class="stat-label">Acciones</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="sendToBot('user_clicked_welcome')">
+                    👋 Saludar al Bot
+                </button>
+            </div>
+        </div>
+        
+        <!-- Tab: Formulario -->
+        <div id="form" class="tab-content">
+            <div class="card">
+                <h3>📝 Enviar Datos</h3>
+                <form id="dataForm">
+                    <div class="form-group">
+                        <label for="name">Nombre:</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="category">Categoría:</label>
+                        <select id="category" name="category">
+                            <option value="general">General</option>
+                            <option value="support">Soporte</option>
+                            <option value="feedback">Feedback</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">Mensaje:</label>
+                        <textarea id="message" name="message" rows="4" placeholder="Escribe tu mensaje aquí..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        📨 Enviar al Bot
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Tab: Estadísticas -->
+        <div id="stats" class="tab-content">
+            <div class="card">
+                <h3>📊 Estadísticas</h3>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="visits">0</div>
+                        <div class="stat-label">Visitas</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="clicks">0</div>
+                        <div class="stat-label">Clics</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="forms">0</div>
+                        <div class="stat-label">Formularios</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="time">0s</div>
+                        <div class="stat-label">Tiempo</div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="updateStats()">
+                    🔄 Actualizar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Inicializar Telegram Web App
+        const tg = window.Telegram.WebApp;
+        
+        // Configurar la app
+        tg.ready();
+        tg.expand();
+        
+        // Variables globales
+        let stats = {
+            visits: 1,
+            clicks: 0,
+            forms: 0,
+            startTime: Date.now()
+        };
+        
+        // Función para mostrar mensaje
+        function showMessage(text, type = 'success') {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            messageEl.style.display = 'block';
+            
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Función para cambiar tabs
+        function showTab(tabName) {
+            // Ocultar todos los contenidos
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Desactivar todos los tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar el contenido seleccionado
+            document.getElementById(tabName).classList.add('active');
+            
+            // Activar el tab seleccionado
+            event.target.classList.add('active');
+            
+            stats.clicks++;
+        }
+        
+        // Función para enviar datos al bot
+        function sendToBot(data) {
+            stats.clicks++;
+            
+            // Enviar datos al bot de Telegram
+            tg.sendData(JSON.stringify({
+                action: 'button_click',
+                data: data,
+                timestamp: Date.now(),
+                user: tg.initDataUnsafe.user
+            }));
+            
+            showMessage('¡Datos enviados al bot!', 'success');
+        }
+        
+        // Manejar envío de formulario
+        document.getElementById('dataForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            stats.forms++;
+            
+            // Enviar al bot
+            tg.sendData(JSON.stringify({
+                action: 'form_submit',
+                data: data,
+                timestamp: Date.now(),
+                user: tg.initDataUnsafe.user
+            }));
+            
+            showMessage('¡Formulario enviado correctamente!', 'success');
+            this.reset();
+        });
+        
+        // Función para actualizar estadísticas
+        function updateStats() {
+            const currentTime = Math.floor((Date.now() - stats.startTime) / 1000);
+            
+            document.getElementById('visits').textContent = stats.visits;
+            document.getElementById('clicks').textContent = stats.clicks;
+            document.getElementById('forms').textContent = stats.forms;
+            document.getElementById('time').textContent = currentTime + 's';
+            
+            showMessage('Estadísticas actualizadas', 'success');
+        }
+        
+        // Configurar botón principal de Telegram
+        tg.MainButton.setText('Enviar Datos');
+        tg.MainButton.show();
+        tg.MainButton.onClick(() => {
+            sendToBot('main_button_clicked');
+        });
+        
+        // Inicializar estadísticas
+        updateStats();
+        
+        // Actualizar estadísticas cada 5 segundos
+        setInterval(updateStats, 5000);
+        
+        // Manejar el cierre de la app
+        window.addEventListener('beforeunload', function() {
+            tg.sendData(JSON.stringify({
+                action: 'app_close',
+                stats: stats,
+                timestamp: Date.now()
+            }));
+        });
+    </script>
+</body>
+</html>
