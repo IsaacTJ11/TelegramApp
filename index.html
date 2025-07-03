@@ -163,6 +163,15 @@
         .tab-content.active {
             display: block;
         }
+        
+        .debug {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -173,6 +182,10 @@
         </div>
         
         <div id="message" class="message"></div>
+        
+        <div class="debug" id="debug">
+            Inicializando...
+        </div>
         
         <div class="tabs">
             <div class="tab active" onclick="showTab('home')">🏠 Inicio</div>
@@ -197,6 +210,9 @@
                 </div>
                 <button class="btn btn-primary" onclick="sendToBot('user_clicked_welcome')">
                     👋 Saludar al Bot
+                </button>
+                <button class="btn btn-secondary" onclick="sendTestMessage()">
+                    🧪 Mensaje de Prueba
                 </button>
             </div>
         </div>
@@ -226,8 +242,8 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="message">Mensaje:</label>
-                        <textarea id="message" name="message" rows="4" placeholder="Escribe tu mensaje aquí..."></textarea>
+                        <label for="messageText">Mensaje:</label>
+                        <textarea id="messageText" name="messageText" rows="4" placeholder="Escribe tu mensaje aquí..."></textarea>
                     </div>
                     
                     <button type="submit" class="btn btn-primary">
@@ -243,7 +259,7 @@
                 <h3>📊 Estadísticas</h3>
                 <div class="stats">
                     <div class="stat-item">
-                        <div class="stat-number" id="visits">0</div>
+                        <div class="stat-number" id="visits">1</div>
                         <div class="stat-label">Visitas</div>
                     </div>
                     <div class="stat-item">
@@ -267,12 +283,34 @@
     </div>
     
     <script>
-        // Inicializar Telegram Web App
-        const tg = window.Telegram.WebApp;
+        // Verificar si Telegram WebApp está disponible
+        let tg = null;
+        let isInTelegram = false;
         
-        // Configurar la app
-        tg.ready();
-        tg.expand();
+        try {
+            tg = window.Telegram.WebApp;
+            isInTelegram = true;
+            
+            // Configurar la app
+            tg.ready();
+            tg.expand();
+            
+            // Configurar el botón principal
+            tg.MainButton.setText('💬 Enviar al Bot');
+            tg.MainButton.color = '#0088cc';
+            tg.MainButton.textColor = '#ffffff';
+            tg.MainButton.show();
+            
+            tg.MainButton.onClick(() => {
+                sendToBot('main_button_clicked');
+            });
+            
+            updateDebug('✅ Telegram WebApp conectado');
+            
+        } catch (error) {
+            console.log('No se detectó Telegram WebApp:', error);
+            updateDebug('⚠️ No se detectó Telegram WebApp - Modo de prueba');
+        }
         
         // Variables globales
         let stats = {
@@ -281,6 +319,12 @@
             forms: 0,
             startTime: Date.now()
         };
+        
+        // Función para actualizar debug
+        function updateDebug(text) {
+            const debugEl = document.getElementById('debug');
+            debugEl.textContent = text;
+        }
         
         // Función para mostrar mensaje
         function showMessage(text, type = 'success') {
@@ -313,21 +357,49 @@
             event.target.classList.add('active');
             
             stats.clicks++;
+            updateStats();
         }
         
         // Función para enviar datos al bot
-        function sendToBot(data) {
+        function sendToBot(action, data = null) {
             stats.clicks++;
+            updateStats();
             
-            // Enviar datos al bot de Telegram
-            tg.sendData(JSON.stringify({
-                action: 'button_click',
+            const payload = {
+                action: action,
                 data: data,
                 timestamp: Date.now(),
-                user: tg.initDataUnsafe.user
-            }));
+                stats: stats
+            };
             
-            showMessage('¡Datos enviados al bot!', 'success');
+            // Agregar información del usuario si está disponible
+            if (isInTelegram && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                payload.user = tg.initDataUnsafe.user;
+            }
+            
+            if (isInTelegram) {
+                try {
+                    tg.sendData(JSON.stringify(payload));
+                    showMessage('✅ Datos enviados al bot!', 'success');
+                    updateDebug('✅ Datos enviados: ' + action);
+                } catch (error) {
+                    showMessage('❌ Error enviando datos', 'error');
+                    updateDebug('❌ Error: ' + error.message);
+                }
+            } else {
+                // Modo de prueba
+                console.log('Datos que se enviarían:', payload);
+                showMessage('🧪 Modo de prueba - Datos registrados en consola', 'success');
+                updateDebug('🧪 Modo prueba: ' + action);
+            }
+        }
+        
+        // Función para enviar mensaje de prueba
+        function sendTestMessage() {
+            sendToBot('test_message', {
+                message: 'Este es un mensaje de prueba desde la Mini App',
+                timestamp: new Date().toISOString()
+            });
         }
         
         // Manejar envío de formulario
@@ -335,19 +407,19 @@
             e.preventDefault();
             
             const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
+            const data = {};
+            
+            // Convertir FormData a objeto
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
             
             stats.forms++;
+            updateStats();
             
-            // Enviar al bot
-            tg.sendData(JSON.stringify({
-                action: 'form_submit',
-                data: data,
-                timestamp: Date.now(),
-                user: tg.initDataUnsafe.user
-            }));
+            sendToBot('form_submit', data);
             
-            showMessage('¡Formulario enviado correctamente!', 'success');
+            // Limpiar formulario
             this.reset();
         });
         
@@ -359,16 +431,7 @@
             document.getElementById('clicks').textContent = stats.clicks;
             document.getElementById('forms').textContent = stats.forms;
             document.getElementById('time').textContent = currentTime + 's';
-            
-            showMessage('Estadísticas actualizadas', 'success');
         }
-        
-        // Configurar botón principal de Telegram
-        tg.MainButton.setText('Enviar Datos');
-        tg.MainButton.show();
-        tg.MainButton.onClick(() => {
-            sendToBot('main_button_clicked');
-        });
         
         // Inicializar estadísticas
         updateStats();
@@ -378,12 +441,26 @@
         
         // Manejar el cierre de la app
         window.addEventListener('beforeunload', function() {
-            tg.sendData(JSON.stringify({
-                action: 'app_close',
-                stats: stats,
-                timestamp: Date.now()
-            }));
+            if (isInTelegram) {
+                try {
+                    tg.sendData(JSON.stringify({
+                        action: 'app_close',
+                        stats: stats,
+                        timestamp: Date.now()
+                    }));
+                } catch (error) {
+                    console.log('Error al cerrar:', error);
+                }
+            }
         });
+        
+        // Enviar evento de inicio
+        setTimeout(() => {
+            sendToBot('app_started', {
+                startTime: new Date().toISOString(),
+                userAgent: navigator.userAgent
+            });
+        }, 1000);
     </script>
 </body>
 </html>
