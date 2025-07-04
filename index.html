@@ -1,47 +1,260 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>Mini App Telegram</title>
-  <meta charset="utf-8">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    body {
-      background: #f0f0f0;
-      font-family: Arial, sans-serif;
-      padding: 40px;
-      text-align: center;
-    }
-    h1 {
-      color: #2c3e50;
-    }
-    input, button {
-      font-size: 18px;
-      padding: 10px;
-      margin: 10px;
-      width: 80%;
-      max-width: 300px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            border-radius: 12px;
+            background: var(--tg-theme-secondary-bg-color, #f8f9fa);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--tg-theme-text-color, #000000);
+            font-size: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--tg-theme-text-color, #000000);
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--tg-theme-button-color, #007bff);
+            border-radius: 8px;
+            font-size: 16px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            transition: border-color 0.3s ease;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--tg-theme-button-color, #0056b3);
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: var(--tg-theme-button-color, #007bff);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        button:hover {
+            background: var(--tg-theme-button-color, #0056b3);
+            opacity: 0.9;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .user-info {
+            margin-bottom: 20px;
+            padding: 10px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
-  <h1>Mini App Telegram</h1>
-  <p>Envía un mensaje al bot:</p>
-  <input type="text" id="mensaje" placeholder="Escribe algo...">
-  <br>
-  <button onclick="enviarDatos()">📨 Enviar al bot</button>
+    <div class="container">
+        <h1>📱 Telegram Mini App</h1>
+        
+        <div id="userInfo" class="user-info" style="display: none;">
+            <strong>Usuario:</strong> <span id="userName"></span><br>
+            <strong>ID:</strong> <span id="userId"></span>
+        </div>
+        
+        <form id="messageForm">
+            <div class="form-group">
+                <label for="messageInput">Escribe tu mensaje:</label>
+                <input type="text" id="messageInput" placeholder="Ingresa tu mensaje aquí..." required>
+            </div>
+            
+            <button type="submit" id="submitBtn">
+                📤 Enviar Mensaje
+            </button>
+        </form>
+        
+        <div id="status" class="status"></div>
+    </div>
 
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-
-    function enviarDatos() {
-      const mensaje = document.getElementById("mensaje").value;
-      if (mensaje.trim() === "") {
-        alert("Por favor escribe algo.");
-        return;
-      }
-      tg.sendData(mensaje);
-    }
-  </script>
+    <script>
+        // Configuración
+        const BOT_TOKEN = "8135067208:AAEIHC746XjznRKS3CmgJdmE_pd5MCAaSO8";
+        const GROUP_CHAT_ID = "-4804404431";
+        
+        // Inicializar Telegram Web App
+        const tg = window.Telegram.WebApp;
+        
+        // Configurar tema
+        tg.ready();
+        tg.expand();
+        
+        // Mostrar información del usuario si está disponible
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            const user = tg.initDataUnsafe.user;
+            document.getElementById('userName').textContent = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+            document.getElementById('userId').textContent = user.id;
+            document.getElementById('userInfo').style.display = 'block';
+        }
+        
+        // Función para mostrar estado
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Función para enviar mensaje
+        async function sendMessage(message) {
+            try {
+                const user = tg.initDataUnsafe?.user;
+                const userInfo = user ? `👤 ${user.first_name}${user.last_name ? ' ' + user.last_name : ''} (ID: ${user.id})` : '👤 Usuario anónimo';
+                
+                const fullMessage = `${userInfo}\n📝 ${message}`;
+                
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        chat_id: GROUP_CHAT_ID,
+                        text: fullMessage,
+                        parse_mode: 'HTML'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.ok) {
+                    showStatus('✅ Mensaje enviado correctamente', 'success');
+                    document.getElementById('messageInput').value = '';
+                    
+                    // Vibrar si está disponible
+                    if (tg.HapticFeedback) {
+                        tg.HapticFeedback.notificationOccurred('success');
+                    }
+                } else {
+                    throw new Error(result.description || 'Error desconocido');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus('❌ Error al enviar mensaje: ' + error.message, 'error');
+                
+                // Vibrar si está disponible
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.notificationOccurred('error');
+                }
+            }
+        }
+        
+        // Manejar envío del formulario
+        document.getElementById('messageForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const messageInput = document.getElementById('messageInput');
+            const submitBtn = document.getElementById('submitBtn');
+            const message = messageInput.value.trim();
+            
+            if (!message) {
+                showStatus('⚠️ Por favor ingresa un mensaje', 'error');
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = '📤 Enviando...';
+            
+            await sendMessage(message);
+            
+            submitBtn.disabled = false;
+            submitBtn.textContent = '📤 Enviar Mensaje';
+        });
+        
+        // Configurar botón principal de Telegram
+        tg.MainButton.setText('Enviar Mensaje');
+        tg.MainButton.onClick(() => {
+            document.getElementById('messageForm').dispatchEvent(new Event('submit'));
+        });
+        
+        // Mostrar botón principal cuando hay texto
+        document.getElementById('messageInput').addEventListener('input', function() {
+            if (this.value.trim()) {
+                tg.MainButton.show();
+            } else {
+                tg.MainButton.hide();
+            }
+        });
+    </script>
 </body>
 </html>
